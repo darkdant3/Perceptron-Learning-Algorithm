@@ -13,6 +13,7 @@ class Perceptron:
         self.iterations = 0
         self.max_iterations = 50
         self.w_list = []
+        self.b_list = []
         try:
             self.output_file = open(output_file, 'a')
             if os.fstat(self.output_file.fileno()).st_size != 0:
@@ -46,7 +47,9 @@ class Perceptron:
             self.output_file.write(line + '\n')
 
             self.w_list.append(deepcopy(self.w))
+            self.b_list.append(deepcopy(self.b))
             # convergence test
+            # compare the difference between the last two weight sets
             try:
                 if self.w_list[-1][0] - self.w_list[-2][0] == 0 and self.w_list[-1][1] - self.w_list[-2][1] == 0:
                     print 'Converged,  b=%d ws{}'.format(self.w) % self.b
@@ -68,16 +71,33 @@ class Perceptron:
         return np.sign(h)
 
 
-def plot_data(data):
+def plot_data(data, w_list, b_list):
+
     x1_1 = data[data[:, 2] == 1, 0]
     x1_2 = data[data[:, 2] == -1, 0]
     x2_1 = data[data[:, 2] == 1, 1]
     x2_2 = data[data[:, 2] == -1, 1]
 
-    plt.scatter(x1_1, x2_1, marker='+')
-    plt.scatter(x1_2, x2_2, marker='o')
-    plt.ion()
-    # plt.show()
+    fig, ax = plt.subplots()
+    # add data points
+    ax.scatter(x1_1, x2_1, marker='+')
+    ax.scatter(x1_2, x2_2, marker='o')
+    # plot the decision boundaries
+    x1 = np.linspace(0, 20)
+    x2 = (b_list[-1] + (w_list[-1][0] * x1)) / - w_list[-1][1]
+    ax.plot(x1, x2)
+
+    plt.show()
+    '''for i, ws in enumerate(w_list):
+        fig, ax = plt.subplots()
+        # add data points
+        ax.scatter(x1_1, x2_1, marker='+')
+        ax.scatter(x1_2, x2_2, marker='o')
+        # x2 = (b + w1 * x1) / - w2 derived from 0 = b + w1x1 + w2x2
+        x2 = (b_list[i] + (ws[0] * x1)) / - ws[1]
+        ax.plot(x1, x2)
+
+        plt.show()'''
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:
@@ -91,12 +111,11 @@ if __name__ == '__main__':
     try:
         dataset = np.genfromtxt(input_csv, delimiter=',', dtype='i8')
 
-        plot_data(dataset)
-
         X = dataset[:, 0:2]
         y = dataset[:, 2]
         pla.fit(X, y)
-        #pla.predict(X)
+        #plot_data(dataset, pla.w_list, pla.b_list)
+
         pla.output_file.close()
     except Exception as e:
         raise
